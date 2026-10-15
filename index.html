@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Population Genetics Explorer & Wahlund Effect Simulator</title>
+  <meta name="description" content="Interactive modern web simulator for population genetics, genetic drift, spatial non-random mating, migration, and the Wahlund effect.">
+
+  <!-- KaTeX CSS (Local + CDN Fallback) -->
+  <link rel="stylesheet" href="lib/katex.min.css" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css';">
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ========================================================================
+       App Header
+       ======================================================================== -->
+  <header class="app-header">
+    <div class="brand-container">
+      <div class="brand-logo" title="Population Genetics Explorer">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 15c6.667-6 13.333 0 20-6"></path>
+          <path d="M9 22c1.798-1.998 2.518-3.995 2.807-5.993"></path>
+          <path d="M15 2c-1.798 1.998-2.518 3.995-2.807 5.993"></path>
+          <path d="m17 6-2.5-2.5"></path>
+          <path d="m14 8-1-1"></path>
+          <path d="m7 18 2.5 2.5"></path>
+          <path d="m3.5 14.5.5.5"></path>
+          <path d="m20 9 .5.5"></path>
+        </svg>
+      </div>
+      <div>
+        <h1 class="brand-title">
+          Population Genetics Explorer
+          <span class="brand-badge">Wahlund Effect</span>
+        </h1>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <!-- Theory & Formulas Button -->
+      <button class="btn" id="btn-open-theory" title="Learn the Theory & Formulas">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        Theory & Formulas
+      </button>
+
+      <!-- Export Data Button -->
+      <button class="btn" id="btn-export-csv" title="Export Simulation Data as CSV">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Export CSV
+      </button>
+
+      <!-- Theme Switcher Button -->
+      <button class="btn btn-icon" id="btn-theme-toggle" title="Toggle Dark/Light Mode">
+        <svg class="theme-icon-dark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="theme-icon-light" style="display:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       App Main Container: Sidebar + Content Area
+       ======================================================================== -->
+  <div class="app-container">
+
+    <!-- Sidebar Controls -->
+    <aside class="sidebar">
+
+      <!-- Presets Panel -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <span class="panel-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            Evolutionary Scenarios
+          </span>
+        </div>
+        <div class="presets-grid">
+          <button class="preset-chip active" data-preset="default" title="Standard single population neutral drift">
+            <span>🏛️ Standard Drift</span>
+          </button>
+          <button class="preset-chip" data-preset="wahlund" title="Isolates with no migration showing strong Wahlund heterozygote deficit">
+            <span>🏝️ Wahlund Effect</span>
+          </button>
+          <button class="preset-chip" data-preset="panmixia" title="High migration rates homogenizing subpopulations">
+            <span>🌊 High Gene Flow</span>
+          </button>
+          <button class="preset-chip" data-preset="drift" title="Small isolated population with rapid allele fixation">
+            <span>🎲 Small Island</span>
+          </button>
+          <button class="preset-chip" data-preset="overdominance" title="Heterozygote advantage maintaining stable polymorphism">
+            <span>⚖️ Balancing Sel.</span>
+          </button>
+          <button class="preset-chip" data-preset="spatial" title="Non-random spatial isolation by distance">
+            <span>🗺️ Spatial Isolation</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Core Simulation Parameters -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <span class="panel-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            Core Parameters
+          </span>
+        </div>
+
+        <!-- Population Size (N) -->
+        <div class="control-group">
+          <div class="control-label-row">
+            <span>Population Size (N)</span>
+            <input type="number" id="num-pop-size" class="control-num-input" min="2" max="1000" value="500">
+          </div>
+          <div class="slider-container">
+            <input type="range" id="slider-pop-size" min="2" max="1000" value="500">
+          </div>
+        </div>
+
+        <!-- Initial Frequency (p) -->
+        <div class="control-group">
+          <div class="control-label-row">
+            <span>Initial Freq of A₁ (p)</span>
+            <input type="number" id="num-init-p" class="control-num-input" min="0" max="1" step="0.01" value="0.50">
+          </div>
+          <div class="slider-container">
+            <input type="range" id="slider-init-p" min="0" max="1" step="0.01" value="0.50">
+          </div>
+        </div>
+
+        <!-- Generations -->
+        <div class="control-group">
+          <div class="control-label-row">
+            <span>Generations</span>
+            <input type="number" id="num-generations" class="control-num-input" min="2" max="1000" value="50">
+          </div>
+          <div class="slider-container">
+            <input type="range" id="slider-generations" min="2" max="1000" value="50">
+          </div>
+        </div>
+
+        <!-- Replications -->
+        <div class="control-group">
+          <div class="control-label-row">
+            <span>Replications</span>
+            <input type="number" id="num-replications" class="control-num-input" min="1" max="20" value="1">
+          </div>
+          <div class="slider-container">
+            <input type="range" id="slider-replications" min="1" max="20" step="1" value="1">
+          </div>
+        </div>
+      </div>
+
+      <!-- Spatial & Substructure Parameters -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <span class="panel-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            Substructure & Geography
+          </span>
+        </div>
+
+        <!-- Sub-populations (Segmented Buttons) -->
+        <div class="control-group">
+          <div class="control-label-row">
+            <span>Sub-populations (K)</span>
+            <span class="control-val-badge" id="lbl-subpop">1</span>
+          </div>
+          <div class="subpop-selector" id="subpop-buttons">
+            <button type="button" class="subpop-btn active" data-val="1">1</button>
+            <button type="button" class="subpop-btn" data-val="2">2</button>
+            <button type="button" class="subpop-btn" data-val="3">3</button>
+            <button type="button" class="subpop-btn" data-val="4">4</button>
+            <button type="button" class="subpop-btn" data-val="5">5</button>
+          </div>
+        </div>
+
+        <!-- Migration Rate -->
+        <div class="control-group">
+          <div class="control-label-row">
+            <span>Migration Rate (m)</span>
+            <input type="number" id="num-m-rate" class="control-num-input" min="0" max="0.5" step="0.005" value="0.01">
+          </div>
+          <div class="slider-container">
+            <input type="range" id="slider-m-rate" min="0" max="0.5" step="0.005" value="0.01">
+          </div>
+        </div>
+
+        <!-- Spatial Non-Random Mating Switch -->
+        <div class="switch-row">
+          <span style="font-size:0.82rem; font-weight:600; color:var(--text-secondary);">Spatial Non-Random Mating</span>
+          <label class="switch">
+            <input type="checkbox" id="chk-non-random">
+            <span class="slider-switch"></span>
+          </label>
+        </div>
+
+        <!-- Distance Decay Slider (conditional) -->
+        <div class="control-group" id="group-dist-decay" style="display: none;">
+          <div class="control-label-row">
+            <span>Distance Decay (&alpha;)</span>
+            <input type="number" id="num-dist-decay" class="control-num-input" min="0" max="50" step="1" value="10">
+          </div>
+          <div class="slider-container">
+            <input type="range" id="slider-dist-decay" min="0" max="50" step="1" value="10">
+          </div>
+        </div>
+      </div>
+
+      <!-- Advanced Evolutionary Forces (Accordion) -->
+      <div class="panel-card">
+        <button type="button" class="accordion-toggle" id="btn-toggle-advanced">
+          <span style="display:flex; align-items:center; gap:6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            Advanced: Mutation & Selection
+          </span>
+          <svg id="icon-advanced-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+
+        <div class="accordion-body" id="body-advanced" style="display: none;">
+          <!-- Mutation Rates -->
+          <div class="control-group">
+            <div class="control-label-row">
+              <span>Mutation &mu; (A₁ &rarr; A₂)</span>
+              <input type="number" id="num-mu" class="control-num-input" min="0" max="0.1" step="0.001" value="0">
+            </div>
+            <div class="control-label-row" style="margin-top: 6px;">
+              <span>Mutation &nu; (A₂ &rarr; A₁)</span>
+              <input type="number" id="num-nu" class="control-num-input" min="0" max="0.1" step="0.001" value="0">
+            </div>
+          </div>
+
+          <!-- Relative Fitness -->
+          <div class="control-group">
+            <div class="control-label-row">
+              <span>Relative Fitness (w)</span>
+            </div>
+            <div class="fitness-row">
+              <div class="fitness-item">
+                <span class="fitness-label">w₁₁ (A₁A₁)</span>
+                <input type="number" id="num-w11" class="control-num-input" min="0" max="1" step="0.05" value="1.0" style="width:100%;">
+              </div>
+              <div class="fitness-item">
+                <span class="fitness-label">w₁₂ (A₁A₂)</span>
+                <input type="number" id="num-w12" class="control-num-input" min="0" max="1" step="0.05" value="1.0" style="width:100%;">
+              </div>
+              <div class="fitness-item">
+                <span class="fitness-label">w₂₂ (A₂A₂)</span>
+                <input type="number" id="num-w22" class="control-num-input" min="0" max="1" step="0.05" value="1.0" style="width:100%;">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-bar">
+        <button class="btn btn-primary btn-run" id="btn-run-sim" title="Run simulation (Ctrl+Enter)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Run Simulation
+        </button>
+
+        <div class="auto-run-row">
+          <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+            <input type="checkbox" id="chk-auto-run" checked>
+            <span>Live updates on change</span>
+          </label>
+          <button type="button" class="btn" id="btn-reset" style="padding: 3px 8px; font-size: 0.74rem;">Reset</button>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+
+      <!-- ====================================================================
+           KPI Metrics Ribbon
+           ==================================================================== -->
+      <section class="kpi-ribbon">
+        <!-- Mean p -->
+        <div class="kpi-card">
+          <div class="kpi-title">
+            <span>Mean Allele Freq (p̄)</span>
+            <span style="color:var(--accent-primary);">A₁</span>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value" id="kpi-p">0.500</span>
+            <span class="kpi-subtext" id="kpi-delta-p">&plusmn;0.00</span>
+          </div>
+          <div class="kpi-subtext" id="kpi-p-status">Polymorphic</div>
+        </div>
+
+        <!-- Fixation Index (Fst) -->
+        <div class="kpi-card">
+          <div class="kpi-title">
+            <span>Fixation Index (F<sub>ST</sub>)</span>
+            <span class="qualitative-pill" id="kpi-fst-pill">Little</span>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value" id="kpi-fst" style="color:var(--color-fst);">0.000</span>
+          </div>
+          <div class="kpi-subtext">Subpopulation divergence</div>
+        </div>
+
+        <!-- Inbreeding within Subpops (Fis) -->
+        <div class="kpi-card">
+          <div class="kpi-title">
+            <span>Inbreeding (F<sub>IS</sub>)</span>
+            <span style="color:var(--color-fis);">&alpha;</span>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value" id="kpi-fis" style="color:var(--color-fis);">0.000</span>
+          </div>
+          <div class="kpi-subtext">Within-group inbreeding</div>
+        </div>
+
+        <!-- Total Inbreeding (Fit) -->
+        <div class="kpi-card">
+          <div class="kpi-title">
+            <span>Total Inbreeding (F<sub>IT</sub>)</span>
+            <span style="color:var(--color-fit);">&Sigma;</span>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value" id="kpi-fit" style="color:var(--color-fit);">0.000</span>
+          </div>
+          <div class="kpi-subtext">Overall pedigree correlation</div>
+        </div>
+
+        <!-- Wahlund Heterozygote Deficit (Delta H) -->
+        <div class="kpi-card">
+          <div class="kpi-title">
+            <span>Wahlund Deficit (&Delta;H)</span>
+            <span style="color:var(--color-a1a2);">&Delta;Het</span>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value" id="kpi-deltah" style="color:var(--color-a1a2);">0.000</span>
+          </div>
+          <div class="kpi-subtext">H<sub>T</sub> - H<sub>S</sub> = 2&sigma;<sub>p</sub>&sup2;</div>
+        </div>
+
+        <!-- Runtime & Engine -->
+        <div class="kpi-card">
+          <div class="kpi-title">
+            <span>Simulation Status</span>
+            <span id="kpi-status-indicator" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981;"></span>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value" id="kpi-runtime" style="font-size:1.3rem;">0 ms</span>
+          </div>
+          <div class="kpi-subtext" id="kpi-reps-gens">1 rep &bull; 50 gens</div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           2x2 Main Visualizations Grid
+           ==================================================================== -->
+      <section class="charts-grid">
+
+        <!-- Card 1: Genetic Drift (Gene Frequency p) -->
+        <div class="chart-card" id="card-p-plot">
+          <div class="chart-header">
+            <div class="chart-title-group">
+              <div class="chart-badge-icon" style="background:var(--accent-gradient);">p</div>
+              <div>
+                <h2 class="chart-title">Genetic Drift (Gene Frequency)</h2>
+                <span class="chart-subtitle">Allele A₁ frequency trajectory across replications</span>
+              </div>
+            </div>
+            <div class="chart-actions">
+              <label style="font-size:0.75rem; color:var(--text-muted); display:flex; align-items:center; gap:4px; margin-right:6px; cursor:pointer;">
+                <input type="checkbox" id="chk-show-bounds">
+                <span>Drift Bounds</span>
+              </label>
+              <button class="chart-btn-icon btn-toggle-expand" data-target="card-p-plot" title="Toggle Fullscreen">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <polyline points="9 21 3 21 3 15"></polyline>
+                  <line x1="21" y1="3" x2="14" y2="10"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="chart-body" id="p-plot-container"></div>
+        </div>
+
+        <!-- Card 2: Genotype Frequencies (Avg) -->
+        <div class="chart-card" id="card-gt-plot">
+          <div class="chart-header">
+            <div class="chart-title-group">
+              <div class="chart-badge-icon" style="background:linear-gradient(135deg, #2563eb, #8b5cf6, #f43f5e);">gt</div>
+              <div>
+                <h2 class="chart-title">Genotype Frequencies (Avg)</h2>
+                <span class="chart-subtitle">A₁A₁, A₁A₂, A₂A₂ proportions over time</span>
+              </div>
+            </div>
+            <div class="chart-actions">
+              <label style="font-size:0.75rem; color:var(--text-muted); display:flex; align-items:center; gap:4px; margin-right:6px; cursor:pointer;" title="Compare observed frequencies against Hardy-Weinberg equilibrium">
+                <input type="checkbox" id="chk-show-hw" checked>
+                <span>H-W Expected</span>
+              </label>
+              <button class="chart-btn-icon btn-toggle-expand" data-target="card-gt-plot" title="Toggle Fullscreen">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <polyline points="9 21 3 21 3 15"></polyline>
+                  <line x1="21" y1="3" x2="14" y2="10"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="chart-body" id="gt-plot-container"></div>
+        </div>
+
+        <!-- Card 3: Spatial Distribution & Generation Evolution -->
+        <div class="chart-card" id="card-spatial-plot">
+          <div class="chart-header">
+            <div class="chart-title-group">
+              <div class="chart-badge-icon" style="background:linear-gradient(135deg, #06b6d4, #3b82f6);">xy</div>
+              <div>
+                <h2 class="chart-title">Spatial Distribution & Generational Evolution</h2>
+                <span class="chart-subtitle" id="spatial-subpop-label">Individuals in spatial territories</span>
+              </div>
+            </div>
+            <div class="chart-actions">
+              <label style="font-size:0.75rem; color:var(--text-muted); display:flex; align-items:center; gap:4px; margin-right:6px; cursor:pointer;">
+                <input type="checkbox" id="chk-show-halos" checked>
+                <span>Territory Halos</span>
+              </label>
+              <button class="chart-btn-icon btn-toggle-expand" data-target="card-spatial-plot" title="Toggle Fullscreen">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <polyline points="9 21 3 21 3 15"></polyline>
+                  <line x1="21" y1="3" x2="14" y2="10"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="chart-body">
+            <div class="spatial-container">
+              <!-- Canvas Area -->
+              <div class="canvas-wrapper" id="canvas-wrapper">
+                <canvas id="spatial-canvas"></canvas>
+
+                <!-- Mini Legend Overlay -->
+                <div class="spatial-overlay-legend">
+                  <div class="legend-item">
+                    <span class="legend-dot" style="background:var(--color-a1a1);"></span>
+                    <span>A₁A₁: <strong id="sp-count-a1a1">0</strong></span>
+                  </div>
+                  <div class="legend-item">
+                    <span class="legend-dot" style="background:var(--color-a1a2);"></span>
+                    <span>A₁A₂: <strong id="sp-count-a1a2">0</strong></span>
+                  </div>
+                  <div class="legend-item">
+                    <span class="legend-dot" style="background:var(--color-a2a2);"></span>
+                    <span>A₂A₂: <strong id="sp-count-a2a2">0</strong></span>
+                  </div>
+                </div>
+
+                <!-- Hover Tooltip -->
+                <div class="spatial-tooltip" id="spatial-tooltip"></div>
+              </div>
+
+              <!-- Playback Controls Bar -->
+              <div class="spatial-playback-bar">
+                <div class="playback-btns">
+                  <button class="btn-playback" id="btn-play-pause" title="Play/Pause Evolution">
+                    <svg id="icon-play" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    <svg id="icon-pause" style="display:none;" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <rect x="6" y="4" width="4" height="16"></rect>
+                      <rect x="14" y="4" width="4" height="16"></rect>
+                    </svg>
+                  </button>
+                  <button class="btn-playback" id="btn-step-prev" title="Step Back 1 Generation">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                  </button>
+                  <button class="btn-playback" id="btn-step-next" title="Step Forward 1 Generation">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="playback-slider-wrapper">
+                  <span class="playback-gen-label" id="lbl-current-gen">Gen 50 / 50</span>
+                  <input type="range" id="slider-timeline" min="0" max="50" value="50" style="margin:0;">
+                </div>
+
+                <select id="select-playback-speed" class="speed-select" title="Playback Speed">
+                  <option value="0.5">0.5&times;</option>
+                  <option value="1" selected>1&times;</option>
+                  <option value="2">2&times;</option>
+                  <option value="4">4&times;</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Wright's F-Statistics -->
+        <div class="chart-card" id="card-f-plot">
+          <div class="chart-header">
+            <div class="chart-title-group">
+              <div class="chart-badge-icon" style="background:linear-gradient(135deg, #10b981, #0891b2);">F</div>
+              <div>
+                <h2 class="chart-title">Wright's F-Statistics (F<sub>ST</sub>, F<sub>IS</sub>, F<sub>IT</sub>)</h2>
+                <span class="chart-subtitle">Hierarchical genetic structure decomposition</span>
+              </div>
+            </div>
+            <div class="chart-actions">
+              <button class="chart-btn-icon btn-toggle-expand" data-target="card-f-plot" title="Toggle Fullscreen">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <polyline points="9 21 3 21 3 15"></polyline>
+                  <line x1="21" y1="3" x2="14" y2="10"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="chart-body" id="f-plot-container">
+            <!-- Inset Badge for Final Stats -->
+            <div class="f-stat-inset" id="f-stat-inset-badge">
+              <strong>Final Stats:</strong><br>
+              <span style="color:var(--color-fst);">F<sub>ST</sub>: <span id="inset-fst">0.0000</span></span><br>
+              <span style="color:var(--color-fis);">F<sub>IS</sub>: <span id="inset-fis">0.0000</span></span><br>
+              <span style="color:var(--color-fit);">F<sub>IT</sub>: <span id="inset-fit">0.0000</span></span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ========================================================================
+       Theory & Formulas Modal
+       ======================================================================== -->
+  <div class="modal-backdrop" id="modal-theory">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          The Wahlund Effect & Theoretical Framework
+        </h2>
+        <button class="modal-close" id="btn-close-theory">&times;</button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Section 1: What is the Wahlund Effect? -->
+        <div class="theory-section">
+          <h3>1. What is the Wahlund Effect?</h3>
+          <p>
+            Formulated in 1928 by Swedish geneticist <strong>Sten Wahlund</strong>, the Wahlund effect states that 
+            <strong>pooling distinct subpopulations with differing allele frequencies produces an apparent deficit of heterozygotes 
+            and an excess of homozygotes</strong> compared to Hardy-Weinberg expectations calculated from the average allele frequency.
+          </p>
+          <p>
+            Crucially, this deficit occurs <em>even if every individual subpopulation is in perfect Hardy-Weinberg equilibrium!</em>
+          </p>
+        </div>
+
+        <!-- Section 2: Mathematical Derivation -->
+        <div class="theory-section">
+          <h3>2. Mathematical Derivation</h3>
+          <p>
+            Suppose a total population is divided into \(K\) equal-sized subpopulations, where subpopulation \(k\) has allele frequency \(p_k\). 
+            Let \(\bar{p} = \frac{1}{K}\sum p_k\) be the mean allele frequency, and \(\sigma_p^2 = \text{Var}(p) = \frac{1}{K}\sum (p_k - \bar{p})^2\).
+          </p>
+          <div class="formula-card" id="math-derivation">
+            <!-- KaTeX rendered below -->
+            $$\bar{P}(A_1A_1) = \bar{p}^2 + \sigma_p^2$$
+            $$\bar{P}(A_1A_2) = 2\bar{p}\bar{q} - 2\sigma_p^2$$
+            $$\bar{P}(A_2A_2) = \bar{q}^2 + \sigma_p^2$$
+          </div>
+          <p>
+            Because the variance \(\sigma_p^2 \ge 0\), the observed heterozygosity in the pooled population is always reduced by exactly 
+            <strong>\(2\sigma_p^2\)</strong>. This quantity is known as the <em>Wahlund Heterozygosity Deficit</em> (\(\Delta H\)).
+          </p>
+        </div>
+
+        <!-- Section 3: Wright's F-Statistics -->
+        <div class="theory-section">
+          <h3>3. Wright's Hierarchical F-Statistics</h3>
+          <p>
+            Sewall Wright partitioned genetic variation into hierarchical inbreeding coefficients:
+          </p>
+          <div class="formula-card">
+            $$(1 - F_{IT}) = (1 - F_{IS})(1 - F_{ST})$$
+          </div>
+          <ul style="padding-left: 20px; display:flex; flex-direction:column; gap:6px;">
+            <li><strong>\(F_{ST} = \frac{H_T - H_S}{H_T} = \frac{\sigma_p^2}{\bar{p}\bar{q}}\)</strong>: Fixation index measuring subpopulation differentiation due to drift and limited gene flow.</li>
+            <li><strong>\(F_{IS} = \frac{H_S - H_I}{H_S}\)</strong>: Inbreeding coefficient of individuals relative to their local subpopulation (non-random mating).</li>
+            <li><strong>\(F_{IT} = \frac{H_T - H_I}{H_T}\)</strong>: Total inbreeding coefficient relative to the entire pooled population.</li>
+          </ul>
+        </div>
+
+        <!-- Section 4: Interactive Wahlund Calculator -->
+        <div class="theory-section">
+          <h3>4. Interactive 2-Subpopulation Wahlund Calculator</h3>
+          <p>Test the theory directly: adjust the allele frequencies in two isolated demes to immediately observe the resulting heterozygote deficit!</p>
+
+          <div class="wahlund-calc-box">
+            <div class="calc-sliders">
+              <div>
+                <label style="font-size:0.8rem; font-weight:700; display:flex; justify-content:space-between;">
+                  <span>Subpopulation 1 Freq (p₁)</span>
+                  <span id="calc-val-p1" style="color:var(--accent-primary);">0.90</span>
+                </label>
+                <input type="range" id="calc-p1" min="0" max="1" step="0.02" value="0.90">
+              </div>
+              <div>
+                <label style="font-size:0.8rem; font-weight:700; display:flex; justify-content:space-between;">
+                  <span>Subpopulation 2 Freq (p₂)</span>
+                  <span id="calc-val-p2" style="color:var(--accent-primary);">0.10</span>
+                </label>
+                <input type="range" id="calc-p2" min="0" max="1" step="0.02" value="0.10">
+              </div>
+            </div>
+
+            <div class="calc-results-grid">
+              <div class="calc-stat-card">
+                <div class="calc-stat-val" id="calc-res-pbar">0.50</div>
+                <div class="calc-stat-lbl">Pooled p̄</div>
+              </div>
+              <div class="calc-stat-card">
+                <div class="calc-stat-val" id="calc-res-ht" style="color:var(--color-fit);">0.500</div>
+                <div class="calc-stat-lbl">Panmictic H<sub>T</sub> (2p̄q̄)</div>
+              </div>
+              <div class="calc-stat-card">
+                <div class="calc-stat-val" id="calc-res-hs" style="color:var(--color-fis);">0.180</div>
+                <div class="calc-stat-lbl">Actual H<sub>S</sub></div>
+              </div>
+              <div class="calc-stat-card">
+                <div class="calc-stat-val" id="calc-res-fst" style="color:var(--color-fst);">0.640</div>
+                <div class="calc-stat-lbl">Fixation F<sub>ST</sub></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       Scripts: Plotly, KaTeX, Simulation Engine, UI Application
+       ======================================================================== -->
+  <!-- Plotly.js (Local + CDN Fallback) -->
+  <script src="lib/plotly-basic.min.js"></script>
+  <script>
+    if (typeof Plotly === 'undefined') {
+      document.write('<script src="https://cdn.plot.ly/plotly-basic-2.35.2.min.js"><\/script>');
+    }
+  </script>
+
+  <!-- KaTeX JS (Local + CDN Fallback) -->
+  <script src="lib/katex.min.js"></script>
+  <script>
+    if (typeof katex === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"><\/script>');
+    }
+  </script>
+
+  <!-- Core Simulation Engine -->
+  <script src="simulation.js"></script>
+
+  <!-- Modern Application Logic & Controller -->
+  <script src="app.js"></script>
+
+</body>
+</html>
